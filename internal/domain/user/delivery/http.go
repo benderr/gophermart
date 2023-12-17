@@ -17,7 +17,7 @@ type UserUsecase interface {
 }
 
 type SessionManager interface {
-	Create(userId string) (string, error)
+	Create(userID string) (string, error)
 }
 
 type userHandler struct {

@@ -15,7 +15,7 @@ type WidthdrawUsecase interface {
 }
 
 type SessionManager interface {
-	GetUserId(c echo.Context) (string, error)
+	GetUserID(c echo.Context) (string, error)
 }
 
 type withdrawHandler struct {
@@ -37,7 +37,7 @@ func NewWithdrawHandlers(group *echo.Group, wu WidthdrawUsecase, session Session
 }
 
 func (w *withdrawHandler) GetWithdrawsHandler(c echo.Context) error {
-	userid, err := w.session.GetUserId(c)
+	userid, err := w.session.GetUserID(c)
 	if err != nil {
 		w.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))

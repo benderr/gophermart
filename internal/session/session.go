@@ -24,20 +24,20 @@ func New(secret string) *sessionManager {
 	}
 }
 
-func (s *sessionManager) Create(userId string) (string, error) {
+func (s *sessionManager) Create(userID string) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
-		UserID: userId,
+		UserID: userID,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.secret))
 }
 
-func (s *sessionManager) GetUserId(c echo.Context) (string, error) {
+func (s *sessionManager) GetUserID(c echo.Context) (string, error) {
 	token, ok := c.Get("user").(*jwt.Token)
 	if !ok {
 		return "", errors.New("JWT token missing or invalid")

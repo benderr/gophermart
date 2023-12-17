@@ -9,7 +9,7 @@ import (
 	"github.com/benderr/gophermart/internal/domain/user"
 	"github.com/benderr/gophermart/internal/domain/user/delivery"
 	"github.com/benderr/gophermart/internal/domain/user/delivery/mocks"
-	"github.com/benderr/gophermart/internal/logger/mock_logger"
+	mocklogger "github.com/benderr/gophermart/internal/logger/mock_logger"
 	"github.com/go-playground/validator"
 	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
@@ -32,7 +32,7 @@ func newTestServer(mockUsecase delivery.UserUsecase, mockSession delivery.Sessio
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	mockLogger := mock_logger.New()
+	mockLogger := mocklogger.New()
 	delivery.NewUserHandlers(e.Group(""), mockUsecase, mockSession, mockLogger)
 
 	return httptest.NewServer(e)

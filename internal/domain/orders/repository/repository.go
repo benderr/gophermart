@@ -24,7 +24,7 @@ func (u *orderRepository) GetByNumber(ctx context.Context, number string) (*orde
 
 	row := u.db.QueryRowContext(ctx, "SELECT order_num, user_id, status, accrual, uploaded_at from orders WHERE order_num = $1", number)
 	var ord orders.Order
-	err := row.Scan(&ord.Number, &ord.UserId, &ord.Status, &ord.Accrual, &ord.UploadedAt)
+	err := row.Scan(&ord.Number, &ord.UserID, &ord.Status, &ord.Accrual, &ord.UploadedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, orders.ErrNotFound
@@ -49,7 +49,7 @@ func (u *orderRepository) GetOrdersByUser(ctx context.Context, userid string) ([
 
 	for rows.Next() {
 		var v orders.Order
-		err = rows.Scan(&v.Number, &v.Status, &v.Accrual, &v.UserId, &v.UploadedAt)
+		err = rows.Scan(&v.Number, &v.Status, &v.Accrual, &v.UserID, &v.UploadedAt)
 		if err != nil {
 			return nil, err
 		}

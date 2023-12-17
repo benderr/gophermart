@@ -22,7 +22,7 @@ func (u *balanceRepository) GetBalanceByUser(ctx context.Context, tx *sql.Tx, us
 
 	row := tx.QueryRowContext(ctx, "SELECT user_id, current, withdrawn from balance WHERE user_id=$1", userid)
 	var ord balance.Balance
-	err := row.Scan(&ord.UserId, &ord.Current, &ord.Withdrawn)
+	err := row.Scan(&ord.UserID, &ord.Current, &ord.Withdrawn)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, balance.ErrNotFound

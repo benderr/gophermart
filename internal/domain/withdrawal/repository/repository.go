@@ -30,7 +30,7 @@ func (w *withdrawalRepository) GetWithdrawsByUser(ctx context.Context, userid st
 
 	for rows.Next() {
 		var wdrl withdrawal.Withdrawal
-		err = rows.Scan(&wdrl.Id, &wdrl.UserId, &wdrl.Order, &wdrl.Sum, &wdrl.PricessedAt)
+		err = rows.Scan(&wdrl.ID, &wdrl.UserID, &wdrl.Order, &wdrl.Sum, &wdrl.PricessedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +45,7 @@ func (w *withdrawalRepository) GetWithdrawsByUser(ctx context.Context, userid st
 	return list, nil
 }
 
-func (u *withdrawalRepository) Create(ctx context.Context, tx *sql.Tx, userid string, order string, sum float64) error {
+func (w *withdrawalRepository) Create(ctx context.Context, tx *sql.Tx, userid string, order string, sum float64) error {
 	_, err := tx.ExecContext(ctx, `INSERT INTO withdrawals (user_id, order_num, sum) VALUES($1, $2, $3)`, userid, order, sum)
 	return err
 }

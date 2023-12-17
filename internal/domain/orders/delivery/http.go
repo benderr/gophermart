@@ -19,7 +19,7 @@ type OrderUsecase interface {
 }
 
 type SessionManager interface {
-	GetUserId(c echo.Context) (string, error)
+	GetUserID(c echo.Context) (string, error)
 }
 
 type ordersHandler struct {
@@ -42,7 +42,7 @@ func NewOrderHandlers(group *echo.Group, ou OrderUsecase, session SessionManager
 }
 
 func (o *ordersHandler) GetOrdersHandler(c echo.Context) error {
-	userid, err := o.session.GetUserId(c)
+	userid, err := o.session.GetUserID(c)
 	if err != nil {
 		o.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.ErrorWithDetails("internal server error", err))
@@ -86,7 +86,7 @@ func (o *ordersHandler) CreateOrderHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, httputils.ErrorWithDetails("internal server error", err))
 	}
 
-	userid, err := o.session.GetUserId(c)
+	userid, err := o.session.GetUserID(c)
 	if err != nil {
 		o.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.ErrorWithDetails("internal server error", err))

@@ -48,7 +48,7 @@ func (o *orderUsecase) ChangeStatus(ctx context.Context, number string, status o
 		}
 
 		if status == orders.PROCESSED && accrual > 0 {
-			err = o.balanceRepo.Add(ctx, tx, order.UserId, accrual)
+			err = o.balanceRepo.Add(ctx, tx, order.UserID, accrual)
 			if err != nil {
 				return err
 			}
@@ -76,7 +76,7 @@ func (o *orderUsecase) Create(ctx context.Context, userid string, number string,
 		return nil, orders.ErrUnexpectedFlow
 	}
 
-	if exist.UserId == userid {
+	if exist.UserID == userid {
 		return exist, orders.ErrExistForUser
 	} else {
 		return exist, orders.ErrForeignForUser

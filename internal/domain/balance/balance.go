@@ -5,7 +5,7 @@ import "errors"
 type Balance struct {
 	Current   float64 `json:"current"`
 	Withdrawn float64 `json:"withdrawn"`
-	UserId    string  `json:"-"`
+	UserID    string  `json:"-"`
 }
 
 var (

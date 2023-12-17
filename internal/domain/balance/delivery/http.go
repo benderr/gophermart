@@ -18,7 +18,7 @@ type BalanceUsecase interface {
 }
 
 type SessionManager interface {
-	GetUserId(c echo.Context) (string, error)
+	GetUserID(c echo.Context) (string, error)
 }
 
 type balanceHandler struct {
@@ -45,17 +45,17 @@ func NewBalanceHandlers(group *echo.Group, bu BalanceUsecase, session SessionMan
 	g.POST("/balance/withdraw", h.WithdrawHandler)
 }
 
-func (o *balanceHandler) GetBalanceHandler(c echo.Context) error {
-	userid, err := o.session.GetUserId(c)
+func (b *balanceHandler) GetBalanceHandler(c echo.Context) error {
+	userid, err := b.session.GetUserID(c)
 	if err != nil {
-		o.logger.Errorln(err)
+		b.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
 	}
 
-	bal, err := o.GetBalanceByUser(c.Request().Context(), userid)
+	bal, err := b.GetBalanceByUser(c.Request().Context(), userid)
 
 	if err != nil {
-		o.logger.Errorln(err)
+		b.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
 	}
 
@@ -84,7 +84,7 @@ func (b *balanceHandler) WithdrawHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
 	}
 
-	userid, err := b.session.GetUserId(c)
+	userid, err := b.session.GetUserID(c)
 	if err != nil {
 		b.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
