@@ -39,11 +39,12 @@ func (u *balanceRepository) Add(ctx context.Context, tx *sql.Tx, userid string, 
 	VALUES($1, $2) 
 	ON CONFLICT (user_id) 
 	DO UPDATE SET current=balance.current + $2`, userid, *balance)
-
+	u.log.Infoln("[TRY ADD BALANCE]", *balance)
 	return err
 }
 
 func (u *balanceRepository) Withdraw(ctx context.Context, tx *sql.Tx, userid string, withdrawn float64) error {
-	_, err := tx.ExecContext(ctx, `UPDATE balance SET withdrawn=balance.withdrawn - $1 WHERE user_id=$2`, withdrawn, userid)
+	u.log.Infoln("[TRY WITHDRAW]", withdrawn)
+	_, err := tx.ExecContext(ctx, `UPDATE balance SET withdrawn=balance.withdrawn + $1,  balance.current - $1 WHERE user_id=$2`, withdrawn, userid)
 	return err
 }

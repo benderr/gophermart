@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -56,8 +55,8 @@ func (a *accrualService) GetOrder(number string) (*accrual.Order, error) {
 // Для проверки корректности работы делаем метод регистрации заказа в сервисе accrual
 func (a *accrualService) Registration(number string) error {
 	goods := make([]accrual.Good, 0)
-	goods = append(goods, accrual.Good{Price: rand.Float64() * 100, Description: "Стиральная машинка LG"})
-	goods = append(goods, accrual.Good{Price: rand.Float64() * 100, Description: "second good desc"})
+	goods = append(goods, accrual.Good{Price: 47399.99, Description: "Стиральная машинка LG"})
+	goods = append(goods, accrual.Good{Price: 14599.50, Description: "Телевизор SAMSUNG"})
 
 	order := &accrual.RegisterOrder{
 		Order: number,

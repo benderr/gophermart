@@ -59,6 +59,8 @@ func (b *balanceHandler) GetBalanceHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
 	}
 
+	b.logger.Infow("[USER BALANCE]", "balance", bal)
+
 	return c.JSON(http.StatusOK, bal)
 }
 
@@ -100,6 +102,8 @@ func (b *balanceHandler) WithdrawHandler(c echo.Context) error {
 		b.logger.Errorln(err)
 		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
 	}
+
+	b.logger.Infow("[WITHDRAW SUCCESS]", "withdraw", w)
 
 	return c.JSON(http.StatusOK, httputils.Ok())
 }
