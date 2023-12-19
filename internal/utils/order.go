@@ -6,33 +6,34 @@ import (
 )
 
 func ValidateOrder(number string) error {
-	return ValidateMoon(number)
+	return validateMoon(number)
 }
 
-func ValidateMoon(number string) error {
+func validateMoon(number string) error {
+	arr := []rune(number)
+	var resultSum int64 = 0
+	parity := len(arr) % 2
 
-	result := make([]int64, 0)
-
-	for i, r := range number {
+	for i, r := range arr {
 		val, err := strconv.ParseInt(string(r), 10, 64)
 
 		if err != nil {
 			return err
 		}
-		if i%2 == 0 {
 
+		del := i % 2
+
+		if del == parity {
 			m := val * 2
 			if m > 9 {
-				result = append(result, m-9)
+				resultSum += m - 9
 			} else {
-				result = append(result, m)
+				resultSum += m
 			}
 		} else {
-			result = append(result, val)
+			resultSum += val
 		}
 	}
-
-	resultSum := sum(result)
 
 	if resultSum%10 == 0 {
 		return nil
@@ -44,11 +45,3 @@ func ValidateMoon(number string) error {
 var (
 	ErrInvalidNumber = errors.New("invalid number")
 )
-
-func sum(sl []int64) int64 {
-	var sum int64 = 0
-	for _, val := range sl {
-		sum += val
-	}
-	return sum
-}

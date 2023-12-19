@@ -51,11 +51,15 @@ func TestValidateOrder(t *testing.T) {
 		},
 		{
 			number: "123",
-			valid:  true,
+			valid:  false,
 		},
 		{
 			number: "0001",
 			valid:  false,
+		},
+		{
+			number: "620282061",
+			valid:  true,
 		},
 	}
 
