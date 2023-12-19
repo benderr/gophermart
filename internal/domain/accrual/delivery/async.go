@@ -2,8 +2,6 @@ package delivery
 
 import (
 	"context"
-	"sync"
-	"time"
 
 	"github.com/benderr/gophermart/internal/domain/orders"
 	"github.com/benderr/gophermart/internal/logger"
@@ -11,26 +9,29 @@ import (
 
 type AccrualUsecase interface {
 	GetProcessOrders(ctx context.Context) ([]orders.Order, error)
-	CheckOrder(ctx context.Context, order string) error
 }
 
+type Publisher interface {
+	Publish(topic string, payload any) error
+}
 type processOrdersTask struct {
-	accrual       AccrualUsecase
-	workPoolLimit int
-	logger        logger.Logger
+	accrual   AccrualUsecase
+	logger    logger.Logger
+	publisher Publisher
 }
 
-func New(ac AccrualUsecase, logger logger.Logger, workPoolLimit int) *processOrdersTask {
+func New(ac AccrualUsecase, publisher Publisher, logger logger.Logger) *processOrdersTask {
 	return &processOrdersTask{
-		accrual:       ac,
-		workPoolLimit: workPoolLimit,
-		logger:        logger,
+		accrual:   ac,
+		logger:    logger,
+		publisher: publisher,
 	}
 }
 
-func (p *processOrdersTask) runIteration(ctx context.Context) error {
+func (p *processOrdersTask) Run(ctx context.Context) error {
 	list, err := p.accrual.GetProcessOrders(ctx)
-	p.logger.Infoln("[START ITERATION]")
+
+	p.logger.Infoln("[START PUBLISH]")
 	p.logger.Infoln("[FETCHED ORDERS]", list)
 
 	if err != nil {
@@ -43,64 +44,13 @@ func (p *processOrdersTask) runIteration(ctx context.Context) error {
 		return nil
 	}
 
-	jobs := make(chan *orders.Order, count)
-	results := make(chan error, count)
-	wg := &sync.WaitGroup{}
-
-	wg.Add(p.workPoolLimit)
-
-	for i := 0; i < p.workPoolLimit; i++ {
-		p.logger.Infoln("[START WORKER]", i)
-		i := i
-		go worker(i, p.logger, wg, jobs, results, func(o *orders.Order) error {
-			p.logger.Infow("[CHECK ORDER START]", "order", o.Number, "job", i)
-			err := p.accrual.CheckOrder(ctx, o.Number)
-			if err != nil {
-				p.logger.Errorln("[CHECK ORDER FAILED]", i, o.Number, err)
-			} else {
-				p.logger.Infow("[CHECK ORDER COMPLETE]", "order", o.Number)
-			}
-			return err
-		})
-	}
-
 	for _, m := range list {
 		p.logger.Infoln("[SENT JOB]", m)
 		m := m
-		jobs <- &m
+		p.publisher.Publish("order.check", &m)
 	}
 
-	close(jobs)
+	p.logger.Infoln("[FINISH PUBLISH]")
 
-	wg.Wait()
-	close(results)
-	p.logger.Infoln("[FINISH ITERATION]")
 	return nil
-}
-
-func (p *processOrdersTask) Run(ctx context.Context, interval int) {
-	go func() {
-		p.runIteration(ctx)
-		ticker := time.NewTicker(time.Second * time.Duration(interval))
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				p.runIteration(ctx)
-			}
-		}
-	}()
-}
-
-type WorkerFunc func(*orders.Order) error
-
-func worker(id int, logger logger.Logger, wg *sync.WaitGroup, jobs <-chan *orders.Order, results chan<- error, fn WorkerFunc) {
-	defer wg.Done()
-	for m := range jobs {
-		logger.Infoln("[GET FROM JOB]", m)
-		err := fn(m)
-		results <- err
-	}
 }

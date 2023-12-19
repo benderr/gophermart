@@ -22,3 +22,7 @@ type BalanceRepo interface {
 type Transactor interface {
 	Within(ctx context.Context, tFunc func(ctx context.Context, tx *sql.Tx) error) error
 }
+
+type Publisher interface {
+	Publish(topic string, payload any) error
+}

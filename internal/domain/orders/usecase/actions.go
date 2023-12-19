@@ -13,14 +13,16 @@ type orderUsecase struct {
 	orderRepo   OrderRepo
 	balanceRepo BalanceRepo
 	transactor  Transactor
+	publisher   Publisher
 	logger      logger.Logger
 }
 
-func New(op OrderRepo, br BalanceRepo, t Transactor, l logger.Logger) *orderUsecase {
+func New(op OrderRepo, br BalanceRepo, t Transactor, p Publisher, l logger.Logger) *orderUsecase {
 	return &orderUsecase{
 		orderRepo:   op,
 		balanceRepo: br,
 		transactor:  t,
+		publisher:   p,
 		logger:      l}
 }
 
@@ -67,6 +69,7 @@ func (o *orderUsecase) Create(ctx context.Context, userid string, number string,
 			if err2 != nil {
 				return nil, err2
 			}
+			o.publisher.Publish("order.check", ord)
 			return ord, nil
 		}
 
