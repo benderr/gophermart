@@ -97,10 +97,10 @@ func main() {
 	privateGroup := e.Group("", echojwt.WithConfig(echojwt.Config{
 		SigningKey:    []byte(conf.SecretKey),
 		NewClaimsFunc: func(c echo.Context) jwt.Claims { return new(session.UserClaims) },
-		ErrorHandler: func(c echo.Context, err error) error {
-			logger.Errorln(err)
-			return err
-		},
+		// ErrorHandler: func(c echo.Context, err error) error {
+		// 	logger.Errorln("[JWT ERROR HANDLER]", err)
+		// 	return err
+		// },
 	}))
 
 	userdelivery.NewUserHandlers(publicGroup, userUsecase, sessionManager, logger)
