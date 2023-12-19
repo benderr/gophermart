@@ -34,11 +34,11 @@ func (u *balanceRepository) GetBalanceByUser(ctx context.Context, tx *sql.Tx, us
 	return &ord, nil
 }
 
-func (u *balanceRepository) Add(ctx context.Context, tx *sql.Tx, userid string, balance float64) error {
+func (u *balanceRepository) Add(ctx context.Context, tx *sql.Tx, userid string, balance *float64) error {
 	_, err := tx.ExecContext(ctx, `INSERT INTO balance (user_id, current)
 	VALUES($1, $2) 
 	ON CONFLICT (user_id) 
-	DO UPDATE SET current=balance.current + $2`, userid, balance)
+	DO UPDATE SET current=balance.current + $2`, userid, *balance)
 
 	return err
 }

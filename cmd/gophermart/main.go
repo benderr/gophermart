@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/benderr/gophermart/internal/config"
 
+	accrualdelivery "github.com/benderr/gophermart/internal/domain/accrual/delivery"
+	"github.com/benderr/gophermart/internal/domain/accrual/services"
+	accrualusecase "github.com/benderr/gophermart/internal/domain/accrual/usecase"
 	userdelivery "github.com/benderr/gophermart/internal/domain/user/delivery"
 	userrepo "github.com/benderr/gophermart/internal/domain/user/repository"
 	userusecase "github.com/benderr/gophermart/internal/domain/user/usecase"
@@ -46,6 +50,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func main() {
 	conf := config.MustLoad()
+	ctx := context.Background()
 
 	logger, sync := logger.New()
 	defer sync()
@@ -54,7 +59,7 @@ func main() {
 
 	logger.Infoln("pass", p)
 
-	db := storage.MustLoad(conf, logger)
+	db := storage.MustLoad(ctx, conf, logger)
 
 	sessionManager := session.New(conf.SecretKey)
 	trsctr := transactor.New(db)
@@ -64,10 +69,15 @@ func main() {
 	balanceRepo := balancerepo.New(db, logger)
 	withdrawRepo := withdrawrepo.New(db, logger)
 
+	accrualService := services.New(string(conf.AccrualServer), logger)
+
 	userUsecase := userusecase.New(userRepo, logger)
 	orderUsecase := orderusecase.New(orderRepo, balanceRepo, trsctr, logger)
 	balanceUsecase := balanceusecase.New(balanceRepo, withdrawRepo, trsctr, logger)
 	withdrawUsecase := withdrawusecase.New(withdrawRepo, logger)
+	accrualUsecase := accrualusecase.New(orderRepo, accrualService, orderUsecase)
+
+	acrualTask := accrualdelivery.New(accrualUsecase, logger, 5)
 
 	e := echo.New()
 	validate := validator.New()
@@ -97,6 +107,8 @@ func main() {
 	orderdelivery.NewOrderHandlers(privateGroup, orderUsecase, sessionManager, logger)
 	balancedelivery.NewBalanceHandlers(privateGroup, balanceUsecase, sessionManager, logger)
 	withdrawdelivery.NewWithdrawHandlers(privateGroup, withdrawUsecase, sessionManager, logger)
+
+	acrualTask.Run(ctx, 5)
 
 	e.Logger.Fatal(e.Start(string(conf.Server)))
 }

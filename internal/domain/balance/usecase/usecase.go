@@ -8,7 +8,7 @@ import (
 )
 
 type BalanceRepo interface {
-	Add(ctx context.Context, tx *sql.Tx, userid string, balance float64) error
+	Add(ctx context.Context, tx *sql.Tx, userid string, balance *float64) error
 	GetBalanceByUser(ctx context.Context, tx *sql.Tx, userid string) (*balance.Balance, error)
 	Withdraw(ctx context.Context, tx *sql.Tx, userid string, withdrawn float64) error
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/benderr/gophermart/internal/domain/orders"
 	"github.com/benderr/gophermart/internal/logger"
@@ -34,6 +36,36 @@ func (u *orderRepository) GetByNumber(ctx context.Context, number string) (*orde
 	}
 
 	return &ord, nil
+}
+
+func (u *orderRepository) GetOrdersByStatuses(ctx context.Context, statuses ...orders.Status) ([]orders.Order, error) {
+	orderlist := make([]orders.Order, 0)
+
+	statusarr, params := createInParams[orders.Status](statuses)
+	u.log.Infoln("configured sql", statusarr, params)
+	rows, err := u.db.QueryContext(ctx, `SELECT order_num, status, accrual, user_id, uploaded_at from orders WHERE status in (`+params+`)  ORDER BY uploaded_at desc`, statusarr...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var v orders.Order
+		err = rows.Scan(&v.Number, &v.Status, &v.Accrual, &v.UserID, &v.UploadedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		orderlist = append(orderlist, v)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return orderlist, nil
 }
 
 func (u *orderRepository) GetOrdersByUser(ctx context.Context, userid string) ([]orders.Order, error) {
@@ -87,7 +119,21 @@ func (u *orderRepository) UpdateStatus(ctx context.Context, tx *sql.Tx, number s
 	return err
 }
 
-func (u *orderRepository) UpdateAccrual(ctx context.Context, tx *sql.Tx, number string, accrual float64) error {
+func (u *orderRepository) UpdateAccrual(ctx context.Context, tx *sql.Tx, number string, accrual *float64) error {
 	_, err := tx.ExecContext(ctx, `UPDATE orders SET accrual=$1 WHERE order_num=$2`, accrual, number)
 	return err
+}
+
+// создаем параметры для выражения IN
+// Пример для []int{1,2,3}
+// Результат []any{1,2,3} "$1,$2,$3"
+func createInParams[T comparable](arr []T) ([]any, string) {
+	res := make([]any, 0)
+	params := make([]string, 0)
+	for i, v := range arr {
+		res = append(res, v)
+		params = append(params, fmt.Sprintf("$%v", i+1))
+
+	}
+	return res, strings.Join(params, ",")
 }

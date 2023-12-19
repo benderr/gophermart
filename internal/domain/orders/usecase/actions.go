@@ -24,7 +24,7 @@ func New(op OrderRepo, br BalanceRepo, t Transactor, l logger.Logger) *orderUsec
 		logger:      l}
 }
 
-func (o *orderUsecase) ChangeStatus(ctx context.Context, number string, status orders.Status, accrual float64) error {
+func (o *orderUsecase) ChangeStatus(ctx context.Context, number string, status orders.Status, accrual *float64) error {
 	return o.transactor.Within(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		order, err := o.orderRepo.GetByNumber(ctx, number)
 		if err != nil {
@@ -40,19 +40,20 @@ func (o *orderUsecase) ChangeStatus(ctx context.Context, number string, status o
 			return err
 		}
 
-		if accrual > 0 {
+		if accrual != nil && *accrual > 0 {
 			err = o.orderRepo.UpdateAccrual(ctx, tx, order.Number, accrual)
 			if err != nil {
 				return err
 			}
-		}
 
-		if status == orders.PROCESSED && accrual > 0 {
-			err = o.balanceRepo.Add(ctx, tx, order.UserID, accrual)
-			if err != nil {
-				return err
+			if status == orders.PROCESSED && order.Status != string(orders.PROCESSED) {
+				err = o.balanceRepo.Add(ctx, tx, order.UserID, accrual)
+				if err != nil {
+					return err
+				}
 			}
 		}
+
 		return nil
 	})
 }
