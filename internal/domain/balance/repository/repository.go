@@ -45,6 +45,6 @@ func (u *balanceRepository) Add(ctx context.Context, tx *sql.Tx, userid string, 
 
 func (u *balanceRepository) Withdraw(ctx context.Context, tx *sql.Tx, userid string, withdrawn float64) error {
 	u.log.Infoln("[TRY WITHDRAW]", withdrawn)
-	_, err := tx.ExecContext(ctx, `UPDATE balance SET withdrawn=balance.withdrawn + $1,  balance.current - $1 WHERE user_id=$2`, withdrawn, userid)
+	_, err := tx.ExecContext(ctx, `UPDATE balance SET withdrawn=balance.withdrawn + $1,  current=balance.current - $1 WHERE user_id=$2`, withdrawn, userid)
 	return err
 }
