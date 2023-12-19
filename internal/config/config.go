@@ -65,7 +65,6 @@ func MustLoad() *Config {
 	return &config
 }
 
-// resty нужен протокол, в тестах указывается без протокола, обходим
 func transformServerAddress(address *ServerAddress) {
 	if !strings.HasPrefix(address.String(), "https://") && !strings.HasPrefix(address.String(), "http://") {
 		*address = ServerAddress("http://" + address.String())
