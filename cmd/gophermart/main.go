@@ -75,7 +75,7 @@ func main() {
 	orderUsecase := orderusecase.New(orderRepo, balanceRepo, trsctr, logger)
 	balanceUsecase := balanceusecase.New(balanceRepo, withdrawRepo, trsctr, logger)
 	withdrawUsecase := withdrawusecase.New(withdrawRepo, logger)
-	accrualUsecase := accrualusecase.New(orderRepo, accrualService, orderUsecase)
+	accrualUsecase := accrualusecase.New(orderRepo, accrualService, orderUsecase, logger)
 
 	acrualTask := accrualdelivery.New(accrualUsecase, logger, 5)
 

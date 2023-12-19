@@ -56,7 +56,7 @@ func (a *accrualService) GetOrder(number string) (*accrual.Order, error) {
 // Для проверки корректности работы делаем метод регистрации заказа в сервисе accrual
 func (a *accrualService) Registration(number string) error {
 	goods := make([]accrual.Good, 0)
-	goods = append(goods, accrual.Good{Price: rand.Float64() * 100, Description: "first good desc"})
+	goods = append(goods, accrual.Good{Price: rand.Float64() * 100, Description: "Стиральная машинка LG"})
 	goods = append(goods, accrual.Good{Price: rand.Float64() * 100, Description: "second good desc"})
 
 	order := &accrual.RegisterOrder{

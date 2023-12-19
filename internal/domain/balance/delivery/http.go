@@ -92,8 +92,6 @@ func (b *balanceHandler) WithdrawHandler(c echo.Context) error {
 
 	err = b.Withdraw(c.Request().Context(), userid, w.Order, *w.Sum)
 
-	b.logger.Infoln("MY BALANCE", err)
-
 	if err != nil {
 		if errors.Is(err, balance.ErrInsufficientFunds) {
 			return c.JSON(http.StatusPaymentRequired, httputils.Error("insufficient funds"))

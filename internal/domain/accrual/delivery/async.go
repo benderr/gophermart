@@ -57,6 +57,8 @@ func (p *processOrdersTask) runIteration(ctx context.Context) error {
 			err := p.accrual.CheckOrder(ctx, o.Number)
 			if err != nil {
 				p.logger.Errorln("[CHECK ORDER FAILED]", i, o.Number, err)
+			} else {
+				p.logger.Infow("[CHECK ORDER COMPLETE]", "order", o.Number)
 			}
 			return err
 		})

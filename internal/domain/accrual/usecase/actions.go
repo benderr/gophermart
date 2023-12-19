@@ -6,19 +6,22 @@ import (
 
 	"github.com/benderr/gophermart/internal/domain/accrual"
 	"github.com/benderr/gophermart/internal/domain/orders"
+	"github.com/benderr/gophermart/internal/logger"
 )
 
 type accrualUsecase struct {
 	orderRepo      OrderRepo
 	accrualService AccrualService
 	orderUsecase   OrderUsecase
+	logger         logger.Logger
 }
 
-func New(op OrderRepo, as AccrualService, ou OrderUsecase) *accrualUsecase {
+func New(op OrderRepo, as AccrualService, ou OrderUsecase, logger logger.Logger) *accrualUsecase {
 	return &accrualUsecase{
 		orderRepo:      op,
 		accrualService: as,
 		orderUsecase:   ou,
+		logger:         logger,
 	}
 }
 
@@ -41,6 +44,8 @@ func (a *accrualUsecase) CheckOrder(ctx context.Context, order string) error {
 	if err != nil {
 		return err
 	}
+
+	a.logger.Infow("[ORDER RESULT]", "order", info)
 
 	return a.orderUsecase.ChangeStatus(ctx, info.Order, orders.Status(info.Status), info.Accrual)
 }
