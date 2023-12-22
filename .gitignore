@@ -23,3 +23,5 @@ vendor/
 .vscode
 
 test.js
+
+.DS_Store
