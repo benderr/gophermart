@@ -5,28 +5,28 @@ import (
 	"net/http"
 
 	"github.com/benderr/gophermart/internal/config"
-	"github.com/benderr/gophermart/internal/messagebroker"
+	messageBroker "github.com/benderr/gophermart/internal/messagebroker"
 
-	accrualconsumer "github.com/benderr/gophermart/internal/domain/accrual/consumer"
-	accrualdelivery "github.com/benderr/gophermart/internal/domain/accrual/delivery"
-	"github.com/benderr/gophermart/internal/domain/accrual/services"
-	accrualusecase "github.com/benderr/gophermart/internal/domain/accrual/usecase"
-	userdelivery "github.com/benderr/gophermart/internal/domain/user/delivery"
-	userrepo "github.com/benderr/gophermart/internal/domain/user/repository"
-	userusecase "github.com/benderr/gophermart/internal/domain/user/usecase"
+	accrualConsumer "github.com/benderr/gophermart/internal/domain/accrual/consumer"
+	accrualDelivery "github.com/benderr/gophermart/internal/domain/accrual/delivery"
+	acrualService "github.com/benderr/gophermart/internal/domain/accrual/services"
+	accrualUsecase "github.com/benderr/gophermart/internal/domain/accrual/usecase"
+	userDelivery "github.com/benderr/gophermart/internal/domain/user/delivery"
+	userRepository "github.com/benderr/gophermart/internal/domain/user/repository"
+	userUsecase "github.com/benderr/gophermart/internal/domain/user/usecase"
 	"github.com/benderr/gophermart/internal/transactor"
 
-	orderdelivery "github.com/benderr/gophermart/internal/domain/orders/delivery"
-	orderrepo "github.com/benderr/gophermart/internal/domain/orders/repository"
-	orderusecase "github.com/benderr/gophermart/internal/domain/orders/usecase"
+	orderDelivery "github.com/benderr/gophermart/internal/domain/orders/delivery"
+	orderRepository "github.com/benderr/gophermart/internal/domain/orders/repository"
+	orderUsecase "github.com/benderr/gophermart/internal/domain/orders/usecase"
 
-	balancedelivery "github.com/benderr/gophermart/internal/domain/balance/delivery"
-	balancerepo "github.com/benderr/gophermart/internal/domain/balance/repository"
-	balanceusecase "github.com/benderr/gophermart/internal/domain/balance/usecase"
+	balanceDelivery "github.com/benderr/gophermart/internal/domain/balance/delivery"
+	balanceRepository "github.com/benderr/gophermart/internal/domain/balance/repository"
+	balanceUsecase "github.com/benderr/gophermart/internal/domain/balance/usecase"
 
-	withdrawdelivery "github.com/benderr/gophermart/internal/domain/withdrawal/delivery"
-	withdrawrepo "github.com/benderr/gophermart/internal/domain/withdrawal/repository"
-	withdrawusecase "github.com/benderr/gophermart/internal/domain/withdrawal/usecase"
+	withdrawDelivery "github.com/benderr/gophermart/internal/domain/withdrawal/delivery"
+	withdrawRepository "github.com/benderr/gophermart/internal/domain/withdrawal/repository"
+	withdrawUsecase "github.com/benderr/gophermart/internal/domain/withdrawal/usecase"
 
 	"github.com/benderr/gophermart/internal/logger"
 	"github.com/benderr/gophermart/internal/session"
@@ -49,27 +49,30 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
-func Run(ctx context.Context, conf *config.Config, logger logger.Logger) *echo.Echo {
+func Run(ctx context.Context, conf *config.Config) {
+	logger, sync := logger.New()
+	defer sync()
+
 	db := storage.MustLoad(ctx, conf, logger)
 
 	sessionManager := session.New(conf.SecretKey)
 	trsctr := transactor.New(db)
-	msgBroker := messagebroker.New(5, logger)
+	msgBroker := messageBroker.New(5, logger)
 	msgBroker.Run(ctx)
 
-	userRepo := userrepo.New(db, logger)
-	orderRepo := orderrepo.New(db, logger)
-	balanceRepo := balancerepo.New(db, logger)
-	withdrawRepo := withdrawrepo.New(db, logger)
-	accrualService := services.New(string(conf.AccrualServer), logger)
+	userRepo := userRepository.New(db, logger)
+	orderRepo := orderRepository.New(db, logger)
+	balanceRepo := balanceRepository.New(db, logger)
+	withdrawRepo := withdrawRepository.New(db, logger)
+	accrualSrv := acrualService.New(string(conf.AccrualServer), logger)
 
-	userUsecase := userusecase.New(userRepo, logger)
-	orderUsecase := orderusecase.New(orderRepo, balanceRepo, trsctr, msgBroker, logger)
-	balanceUsecase := balanceusecase.New(balanceRepo, withdrawRepo, trsctr, logger)
-	withdrawUsecase := withdrawusecase.New(withdrawRepo, logger)
-	accrualUsecase := accrualusecase.New(orderRepo, accrualService, orderUsecase, logger)
+	userUsecase := userUsecase.New(userRepo, logger)
+	orderUsecase := orderUsecase.New(orderRepo, balanceRepo, trsctr, msgBroker, logger)
+	balanceUsecase := balanceUsecase.New(balanceRepo, withdrawRepo, trsctr, logger)
+	withdrawUsecase := withdrawUsecase.New(withdrawRepo, logger)
+	accrualUsecase := accrualUsecase.New(orderRepo, accrualSrv, orderUsecase, logger)
 
-	accrualconsumer.RegisterHandler(accrualUsecase, msgBroker)
+	accrualConsumer.RegisterHandler(accrualUsecase, msgBroker)
 
 	e := echo.New()
 	validate := validator.New()
@@ -85,13 +88,13 @@ func Run(ctx context.Context, conf *config.Config, logger logger.Logger) *echo.E
 		NewClaimsFunc: func(c echo.Context) jwt.Claims { return new(session.UserClaims) },
 	}))
 
-	userdelivery.NewUserHandlers(publicGroup, userUsecase, sessionManager, logger)
-	orderdelivery.NewOrderHandlers(privateGroup, orderUsecase, sessionManager, logger)
-	balancedelivery.NewBalanceHandlers(privateGroup, balanceUsecase, sessionManager, logger)
-	withdrawdelivery.NewWithdrawHandlers(privateGroup, withdrawUsecase, sessionManager, logger)
+	userDelivery.NewUserHandlers(publicGroup, userUsecase, sessionManager, logger)
+	orderDelivery.NewOrderHandlers(privateGroup, orderUsecase, sessionManager, logger)
+	balanceDelivery.NewBalanceHandlers(privateGroup, balanceUsecase, sessionManager, logger)
+	withdrawDelivery.NewWithdrawHandlers(privateGroup, withdrawUsecase, sessionManager, logger)
 
-	acrualTask := accrualdelivery.New(accrualUsecase, msgBroker, logger)
+	acrualTask := accrualDelivery.New(accrualUsecase, msgBroker, logger)
 	acrualTask.Run(ctx)
 
-	return e
+	e.Logger.Fatal(e.Start(string(conf.Server)))
 }

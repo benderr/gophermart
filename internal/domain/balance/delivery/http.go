@@ -8,7 +8,7 @@ import (
 	"github.com/benderr/gophermart/internal/domain/balance"
 	"github.com/benderr/gophermart/internal/httputils"
 	"github.com/benderr/gophermart/internal/logger"
-	"github.com/benderr/gophermart/internal/utils"
+	moonvalidator "github.com/benderr/gophermart/internal/moon_validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -76,10 +76,10 @@ func (b *balanceHandler) WithdrawHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, httputils.Error("invalid request payload"))
 	}
 
-	err := utils.ValidateOrder(w.Order)
+	err := moonvalidator.MoonValidator(w.Order)
 
 	if err != nil {
-		if errors.Is(err, utils.ErrInvalidNumber) {
+		if errors.Is(err, moonvalidator.ErrInvalidNumber) {
 			return c.JSON(http.StatusUnprocessableEntity, httputils.Error("invalid order number"))
 		}
 		b.logger.Errorln(err)

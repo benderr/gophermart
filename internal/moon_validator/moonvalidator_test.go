@@ -1,9 +1,9 @@
-package utils_test
+package moonvalidator_test
 
 import (
 	"testing"
 
-	"github.com/benderr/gophermart/internal/utils"
+	moonvalidator "github.com/benderr/gophermart/internal/moon_validator"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,12 +66,12 @@ func TestValidateOrder(t *testing.T) {
 	for _, test := range tests {
 		t.Run("Validate "+test.number, func(t *testing.T) {
 
-			err := utils.ValidateOrder(test.number)
+			err := moonvalidator.MoonValidator(test.number)
 
 			if test.valid {
 				assert.NoError(t, err, "error validate")
 			} else {
-				assert.ErrorIs(t, err, utils.ErrInvalidNumber)
+				assert.ErrorIs(t, err, moonvalidator.ErrInvalidNumber)
 			}
 		})
 	}

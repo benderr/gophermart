@@ -2,9 +2,7 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
-	"github.com/benderr/gophermart/internal/domain/accrual"
 	"github.com/benderr/gophermart/internal/domain/orders"
 	"github.com/benderr/gophermart/internal/logger"
 )
@@ -37,9 +35,9 @@ func (a *accrualUsecase) CheckOrder(ctx context.Context, order string) error {
 	info, err := a.accrualService.GetOrder(order)
 
 	//Этот кусок для удобства тестирования
-	if err != nil && errors.Is(err, accrual.ErrUnregistered) {
-		a.accrualService.Registration(order)
-	}
+	// if err != nil && errors.Is(err, accrual.ErrUnregistered) {
+	// 	a.accrualService.Registration(order)
+	// }
 
 	if err != nil {
 		return err

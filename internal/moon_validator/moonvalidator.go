@@ -1,15 +1,11 @@
-package utils
+package moonvalidator
 
 import (
 	"errors"
 	"strconv"
 )
 
-func ValidateOrder(number string) error {
-	return validateMoon(number)
-}
-
-func validateMoon(number string) error {
+func MoonValidator(number string) error {
 	arr := []rune(number)
 	var resultSum int64 = 0
 	parity := len(arr) % 2

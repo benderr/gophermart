@@ -5,7 +5,6 @@ import (
 
 	"github.com/benderr/gophermart/internal/domain/user"
 	"github.com/benderr/gophermart/internal/logger"
-	"github.com/benderr/gophermart/internal/utils"
 )
 
 type userRepo interface {
@@ -32,7 +31,7 @@ func (u *userUsecase) Login(ctx context.Context, login, password string) (*user.
 		return nil, user.ErrNotFound
 	}
 
-	if !utils.CheckPasswordHash(password, usr.Password) {
+	if !CheckPasswordHash(password, usr.Password) {
 		return nil, user.ErrBadPass
 	}
 
@@ -40,7 +39,7 @@ func (u *userUsecase) Login(ctx context.Context, login, password string) (*user.
 }
 
 func (u *userUsecase) Register(ctx context.Context, login, password string) (*user.User, error) {
-	passhash, err := utils.HashPassword(password)
+	passhash, err := HashPassword(password)
 
 	if err != nil {
 		return nil, err

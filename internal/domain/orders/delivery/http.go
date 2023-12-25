@@ -9,7 +9,7 @@ import (
 	"github.com/benderr/gophermart/internal/domain/orders"
 	"github.com/benderr/gophermart/internal/httputils"
 	"github.com/benderr/gophermart/internal/logger"
-	"github.com/benderr/gophermart/internal/utils"
+	moonvalidator "github.com/benderr/gophermart/internal/moon_validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -76,10 +76,10 @@ func (o *ordersHandler) CreateOrderHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, httputils.Error("empty number"))
 	}
 
-	err = utils.ValidateOrder(number)
+	err = moonvalidator.MoonValidator(number)
 
 	if err != nil {
-		if errors.Is(err, utils.ErrInvalidNumber) {
+		if errors.Is(err, moonvalidator.ErrInvalidNumber) {
 			return c.JSON(http.StatusUnprocessableEntity, httputils.Error("invalid order number"))
 		}
 		o.logger.Errorln(err)
