@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/benderr/gophermart/internal/config"
-	messageBroker "github.com/benderr/gophermart/internal/messagebroker"
+	messageBroker "github.com/benderr/gophermart/internal/message_broker"
 
 	accrualConsumer "github.com/benderr/gophermart/internal/domain/accrual/consumer"
 	accrualDelivery "github.com/benderr/gophermart/internal/domain/accrual/delivery"
