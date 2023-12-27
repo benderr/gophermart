@@ -1,0 +1,109 @@
+package delivery
+
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/benderr/gophermart/internal/domain/balance"
+	"github.com/benderr/gophermart/internal/httputils"
+	"github.com/benderr/gophermart/internal/logger"
+	moonvalidator "github.com/benderr/gophermart/internal/moon_validator"
+	"github.com/labstack/echo/v4"
+)
+
+type BalanceUsecase interface {
+	GetBalanceByUser(ctx context.Context, userid string) (*balance.Balance, error)
+	Withdraw(ctx context.Context, userid string, number string, withdraw float64) error
+}
+
+type SessionManager interface {
+	GetUserID(c echo.Context) (string, error)
+}
+
+type balanceHandler struct {
+	session SessionManager
+	logger  logger.Logger
+	BalanceUsecase
+}
+
+type WithdrawModel struct {
+	Order string   `json:"order" validate:"required"`
+	Sum   *float64 `json:"sum" validate:"required"`
+}
+
+func NewBalanceHandlers(group *echo.Group, bu BalanceUsecase, session SessionManager, l logger.Logger) {
+	h := &balanceHandler{
+		BalanceUsecase: bu,
+		session:        session,
+		logger:         l,
+	}
+
+	g := group.Group("/api/user")
+
+	g.GET("/balance", h.GetBalanceHandler)
+	g.POST("/balance/withdraw", h.WithdrawHandler)
+}
+
+func (b *balanceHandler) GetBalanceHandler(c echo.Context) error {
+	userid, err := b.session.GetUserID(c)
+	if err != nil {
+		b.logger.Errorln(err)
+		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
+	}
+
+	bal, err := b.GetBalanceByUser(c.Request().Context(), userid)
+
+	if err != nil {
+		b.logger.Errorln(err)
+		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
+	}
+
+	b.logger.Infow("[USER BALANCE]", "balance", bal)
+
+	return c.JSON(http.StatusOK, bal)
+}
+
+func (b *balanceHandler) WithdrawHandler(c echo.Context) error {
+
+	var w WithdrawModel
+
+	if err := c.Bind(&w); err != nil {
+		return c.JSON(http.StatusBadRequest, httputils.Error("invalid request payload"))
+	}
+
+	if err := c.Validate(w); err != nil {
+		return c.JSON(http.StatusBadRequest, httputils.Error("invalid request payload"))
+	}
+
+	err := moonvalidator.MoonValidator(w.Order)
+
+	if err != nil {
+		if errors.Is(err, moonvalidator.ErrInvalidNumber) {
+			return c.JSON(http.StatusUnprocessableEntity, httputils.Error("invalid order number"))
+		}
+		b.logger.Errorln(err)
+		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
+	}
+
+	userid, err := b.session.GetUserID(c)
+	if err != nil {
+		b.logger.Errorln(err)
+		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
+	}
+
+	err = b.Withdraw(c.Request().Context(), userid, w.Order, *w.Sum)
+
+	if err != nil {
+		if errors.Is(err, balance.ErrInsufficientFunds) {
+			return c.JSON(http.StatusPaymentRequired, httputils.Error("insufficient funds"))
+		}
+
+		b.logger.Errorln(err)
+		return c.JSON(http.StatusInternalServerError, httputils.Error("internal server error"))
+	}
+
+	b.logger.Infow("[WITHDRAW SUCCESS]", "withdraw", w)
+
+	return c.JSON(http.StatusOK, httputils.Ok())
+}
